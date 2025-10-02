@@ -29,7 +29,7 @@ Route::get('/mahasiswa/{param1}', [MahasiswaController::class, 'show']);
 
 Route::get('/about', function () {
     return view('halaman-about');
-});
+})->name ('route.about');
 
 Route::get('/matakuliah/{param1}', [MatakuliahController::class, 'show']);
 
