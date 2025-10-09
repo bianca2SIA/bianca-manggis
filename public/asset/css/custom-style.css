@@ -1,0 +1,8 @@
+@font-face {
+    font-family: 'FontBianca';
+    src: url('assets/fonts/OpenSans.ttf');
+}
+
+.font-bianca{
+    font-family: 'FontBianca';
+}
