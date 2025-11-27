@@ -24,6 +24,7 @@
                 <p class="mb-0">List data seluruh pelanggan</p>
             </div>
             <div>
+
                 <a href="{{ route('pelanggan.create') }}" class="btn btn-success text-white"><i
                         class="far fa-question-circle me-1"></i>
                     Tambah Pelanggan</a>
@@ -91,7 +92,11 @@
                                         <td>{{ $item->gender }}</td>
                                         <td>{{ $item->email }}</td>
                                         <td>{{ $item->phone }}</td>
-                                        <td><a href="{{ route('pelanggan.edit', $item->pelanggan_id) }}"
+                                        <td> <a href="{{ route('pelanggan.show', $item->pelanggan_id) }}"
+                                                class="btn btn-warning btn-sm text-white mb-1">
+                                                <i class="fas fa-eye me-1"></i> Detail
+                                            </a>
+                                            <a href="{{ route('pelanggan.edit', $item->pelanggan_id) }}"
                                                 class="btn btn-info btn-sm">
                                                 <svg class="icon icon-xs me-2" data-slot="icon" fill="none"
                                                     stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24"
@@ -102,6 +107,7 @@
                                                 </svg>
                                                 Edit
                                             </a>
+
                                             <form action="{{ route('pelanggan.destroy', $item->pelanggan_id) }}"
                                                 method="POST" style="display:inline">
                                                 @csrf

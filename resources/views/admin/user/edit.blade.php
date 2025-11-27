@@ -7,9 +7,16 @@
 
     <div class="card border-0 shadow mb-4">
         <div class="card-body">
-            <form action="{{ route('user.update', $user->id) }}" method="POST">
+            <form action="{{ route('user.update', $user->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
+                <div class="form-group">
+                    <label>Foto Profil</label>
+                    <input type="file" name="profile_picture" class="form-control"
+                    @if ($user->profile_picture)
+                        <img src="{{ asset('storage/' . $user->profile_picture) }}" width="100" class="mt-2">
+                    @endif
+                </div>
 
                 <div class="mb-3">
                     <label for="name" class="form-label">Nama</label>

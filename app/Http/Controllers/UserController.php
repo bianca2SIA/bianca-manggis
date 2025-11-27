@@ -1,18 +1,18 @@
 <?php
-
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
     // 🔹 Tampilkan semua data user
     public function index()
     {
-         $dataUser = User::all();
-    return view('admin.user.index', compact('dataUser'));
+        $data['dataUser'] = User::paginate(10);
+        return view('admin.user.index', $data);
     }
 
     // 🔹 Form tambah user baru
@@ -25,13 +25,22 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
+            'name'            => 'required|string|max:255',
+            'email'           => 'required|email|unique:users,email',
+            'password'        => 'required|min:6|confirmed',
+            'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $data = $request->all();
+        $data             = $request->all();
         $data['password'] = Hash::make($request->password);
+
+        // 🔸 Upload foto profil jika ada
+        if ($request->hasFile('profile_picture')) {
+            $file     = $request->file('profile_picture');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->storeAs('profile_pictures', $filename, 'public');
+            $data['profile_picture'] = 'profile_pictures/' . $filename;
+        }
 
         User::create($data);
 
@@ -41,8 +50,8 @@ class UserController extends Controller
     // 🔹 Form edit data user
     public function edit($id)
     {
-         $user = User::findOrFail($id);
-    return view('admin.user.edit', compact('user'));
+        $user = User::findOrFail($id);
+        return view('admin.user.edit', compact('user'));
     }
 
     // 🔹 Update data user
@@ -51,18 +60,34 @@ class UserController extends Controller
         $user = User::findOrFail($id);
 
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email,' . $id,
-            'password' => 'nullable|min:6',
+            'name'            => 'required|string|max:255',
+            'email'           => 'required|email|unique:users,email,' . $id,
+            'password'        => 'nullable|min:6|confirmed',
+            'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $data = $request->all();
 
-        // hanya update password jika diisi
-        if (!empty($request->password)) {
+        // 🔸 Update password jika diisi
+        if (! empty($request->password)) {
             $data['password'] = Hash::make($request->password);
         } else {
             unset($data['password']);
+        }
+
+        // 🔸 Jika upload foto baru
+        if ($request->hasFile('profile_picture')) {
+
+            // hapus file lama jika ada
+            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+                Storage::disk('public')->delete($user->profile_picture);
+            }
+
+            // upload file baru
+            $file     = $request->file('profile_picture');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->storeAs('profile_pictures', $filename, 'public');
+            $data['profile_picture'] = 'profile_pictures/' . $filename;
         }
 
         $user->update($data);
@@ -74,6 +99,12 @@ class UserController extends Controller
     public function destroy($id)
     {
         $user = User::findOrFail($id);
+
+        // 🔸 Hapus foto profil dari storage
+        if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+            Storage::disk('public')->delete($user->profile_picture);
+        }
+
         $user->delete();
 
         return redirect()->route('user.index')->with('success', 'User berhasil dihapus!');

@@ -31,7 +31,6 @@
             </div>
         </div>
     </div>
-
     {{-- tabel user --}}
     <div class="row">
         <div class="col-12 mb-4">
@@ -41,6 +40,7 @@
                         <table id="table-user" class="table table-centered table-nowrap mb-0 rounded">
                             <thead class="thead-light">
                                 <tr>
+                                    <th class="border-0">Foto Profile</th>
                                     <th class="border-0">Nama</th>
                                     <th class="border-0">Email</th>
                                     <th class="border-0">Password</th>
@@ -50,12 +50,18 @@
                             <tbody>
                                 @foreach ($dataUser as $item)
                                     <tr>
+                                        <td>
+                                            @if ($item->profile_picture)
+                                                <img src="{{ asset('storage/' . $item->profile_picture) }}"
+                                                    style="width:50px; height:50px; object-fit:cover; border-radius:50%;">
+                                            @else
+                                                <img src="{{ asset('images/default-user.png') }}"
+                                                    style="width:50px; height:50px; object-fit:cover; border-radius:50%;">
+                                            @endif
+                                        </td>
                                         <td>{{ $item->name }}</td>
                                         <td>{{ $item->email }}</td>
-
-
                                         <td>{{ $item->password }}</td>
-
                                         <td>
                                             <a href="{{ route('user.edit', $item->id) }}"
                                                 class="btn btn-info btn-sm text-white">
@@ -74,7 +80,6 @@
                                         </td>
                                     </tr>
                                 @endforeach
-
                                 @if ($dataUser->isEmpty())
                                     <tr>
                                         <td colspan="4" class="text-center text-muted">Belum ada data user</td>
@@ -82,6 +87,9 @@
                                 @endif
                             </tbody>
                         </table>
+                        <div class="mt-3">
+                            {{ $dataUser->links('pagination::bootstrap-5') }}
+                        </div>
                     </div>
                 </div>
             </div>

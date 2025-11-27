@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MahasiswaController;
 use App\Http\Controllers\PelangganController;
 use App\Http\Controllers\MatakuliahController;
+use App\Http\Controllers\MultipleUploadController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -50,5 +51,6 @@ Route::resource('pelanggan', PelangganController::class);
 
 Route::resource('user', UserController::class);
 
-
-
+Route::get('/pelanggan/{id}', [PelangganController::class, 'show'])->name('pelanggan.show');
+Route::post('/pelanggan/{id}/files', [PelangganController::class, 'handleFiles'])->name('pelanggan.files');
+Route::delete('/pelanggan/files/{fileId}', [PelangganController::class, 'deleteFile']) ->name('pelanggan.files.delete');
