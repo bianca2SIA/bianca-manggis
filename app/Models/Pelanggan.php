@@ -36,4 +36,8 @@ class Pelanggan extends Model
             });
         }
     }
+    public function multiuploads()
+    {
+        return $this->hasMany(Multiupload::class, 'pelanggan_id');
+    }
 }

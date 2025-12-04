@@ -35,9 +35,8 @@
         <div class="col-12 mb-4">
             <div class="card border-0 shadow components-section">
                 <div class="card-body">
-                    <form action="{{ route('pelanggan.update', $dataPelanggan->pelanggan_id) }}"
-                          method="POST"
-                          enctype="multipart/form-data">
+                    <form action="{{ route('pelanggan.update', $dataPelanggan->pelanggan_id) }}" method="POST"
+                        enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
 
@@ -46,17 +45,15 @@
                                 {{-- First Name --}}
                                 <div class="mb-3">
                                     <label for="first_name" class="form-label">First name</label>
-                                    <input type="text" name="first_name" id="first_name"
-                                           class="form-control" required
-                                           value="{{ $dataPelanggan->first_name }}">
+                                    <input type="text" name="first_name" id="first_name" class="form-control" required
+                                        value="{{ $dataPelanggan->first_name }}">
                                 </div>
 
                                 {{-- Last Name --}}
                                 <div class="mb-3">
                                     <label for="last_name" class="form-label">Last name</label>
-                                    <input type="text" name="last_name" id="last_name"
-                                           class="form-control" required
-                                           value="{{ $dataPelanggan->last_name }}">
+                                    <input type="text" name="last_name" id="last_name" class="form-control" required
+                                        value="{{ $dataPelanggan->last_name }}">
                                 </div>
                             </div>
 
@@ -64,9 +61,8 @@
                                 {{-- Birthday --}}
                                 <div class="mb-3">
                                     <label for="birthday" class="form-label">Birthday</label>
-                                    <input type="date" name="birthday" id="birthday"
-                                           class="form-control"
-                                           value="{{ $dataPelanggan->birthday }}">
+                                    <input type="date" name="birthday" id="birthday" class="form-control"
+                                        value="{{ $dataPelanggan->birthday }}">
                                 </div>
 
                                 {{-- Gender --}}
@@ -74,9 +70,12 @@
                                     <label for="gender" class="form-label">Gender</label>
                                     <select id="gender" name="gender" class="form-select">
                                         <option value="">Gender</option>
-                                        <option value="Male"   {{ $dataPelanggan->gender == 'Male' ? 'selected' : '' }}>Male</option>
-                                        <option value="Female" {{ $dataPelanggan->gender == 'Female' ? 'selected' : '' }}>Female</option>
-                                        <option value="Other"  {{ $dataPelanggan->gender == 'Other' ? 'selected' : '' }}>Other</option>
+                                        <option value="Male" {{ $dataPelanggan->gender == 'Male' ? 'selected' : '' }}>Male
+                                        </option>
+                                        <option value="Female" {{ $dataPelanggan->gender == 'Female' ? 'selected' : '' }}>
+                                            Female</option>
+                                        <option value="Other" {{ $dataPelanggan->gender == 'Other' ? 'selected' : '' }}>
+                                            Other</option>
                                     </select>
                                 </div>
                             </div>
@@ -85,17 +84,15 @@
                                 {{-- Email --}}
                                 <div class="mb-3">
                                     <label for="email" class="form-label">Email</label>
-                                    <input type="text" name="email" id="email"
-                                           class="form-control" required
-                                           value="{{ $dataPelanggan->email }}">
+                                    <input type="text" name="email" id="email" class="form-control" required
+                                        value="{{ $dataPelanggan->email }}">
                                 </div>
 
                                 {{-- Phone --}}
                                 <div class="mb-3">
                                     <label for="phone" class="form-label">Phone</label>
-                                    <input type="text" name="phone" id="phone"
-                                           class="form-control"
-                                           value="{{ $dataPelanggan->phone }}">
+                                    <input type="text" name="phone" id="phone" class="form-control"
+                                        value="{{ $dataPelanggan->phone }}">
                                 </div>
 
                                 {{-- Upload File Pendukung (multiple) --}}
@@ -111,14 +108,14 @@
                                 <div class="mt-3">
                                     <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
                                     <a href="{{ route('pelanggan.index') }}"
-                                       class="btn btn-outline-secondary ms-2">Batal</a>
+                                        class="btn btn-outline-secondary ms-2">Batal</a>
                                 </div>
                             </div>
                         </div>
                     </form>
 
                     {{-- File yang sudah diupload --}}
-                    @if(isset($files) && $files->count())
+                    @if (isset($files) && $files->count())
                         <hr>
                         <h5>File Pendukung yang sudah diupload</h5>
                         <ul class="list-group mb-3">
@@ -127,9 +124,8 @@
                                     <a href="{{ asset('uploads/multiple/' . $file->filename) }}" target="_blank">
                                         {{ $file->filename }}
                                     </a>
-                                    <form action="{{ route('pelanggan.delete-file', $file->id) }}"
-                                          method="POST"
-                                          onsubmit="return confirm('Yakin ingin menghapus file ini?')">
+                                    <form action="{{ route('pelanggan.delete-file', $file->id) }}" method="POST"
+                                        onsubmit="return confirm('Yakin ingin menghapus file ini?')">
                                         @csrf
                                         @method('DELETE')
                                         <button class="btn btn-danger btn-sm">Hapus</button>

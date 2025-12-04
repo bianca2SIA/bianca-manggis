@@ -1,142 +1,200 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\MultipleUpload;
+use App\Models\Multipleupload;
 use App\Models\Pelanggan;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class PelangganController extends Controller
 {
-    # =========================================
-    #                INDEX
-    # =========================================
     public function index(Request $request)
     {
+        if (Auth::check()) {
+            //Redirect ke halaman login
+            return redirect()->route('auth');
+        }
         $filterableColumns = ['gender'];
-        $searchableColumns = ['first_name'];
+        $searchableColumns = ['first_name', 'last_name', 'email'];
 
-        $data['dataPelanggan'] = Pelanggan::filter($request, $filterableColumns)
+        $data['dataPelanggan'] = Pelanggan::latest()->filter($request, $filterableColumns)
             ->search($request, $searchableColumns)
             ->paginate(10)
-            ->withQueryString();
+            ->onEachSide(2);
 
         return view('admin.pelanggan.index', $data);
     }
 
-    # =========================================
-    #                CREATE
-    # =========================================
     public function create()
     {
+        if (Auth::check()) {
+            //Redirect ke halaman login
+            return redirect()->route('auth');
+        }
         return view('admin.pelanggan.create');
     }
 
-    # =========================================
-    #                STORE
-    # =========================================
     public function store(Request $request)
     {
-        $data = $request->only([
-            'first_name', 'last_name', 'birthday',
-            'gender', 'email', 'phone',
+        $request->validate([
+            'first_name' => 'required',
+            'last_name'  => 'required',
+            'birthday'   => 'required',
+            'gender'     => 'required',
+            'email'      => 'required',
+            'phone'      => 'required',
+            'files.*'    => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
         ]);
 
-        Pelanggan::create($data);
+        // 1. Simpan data pelanggan dulu
+        $pelanggan = Pelanggan::create($request->only([
+            'first_name', 'last_name', 'birthday', 'gender', 'email', 'phone',
+        ]));
+
+        // 2. Kalau ada file yang diupload dari halaman create
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                if (! $file->isValid()) {
+                    continue;
+                }
+
+                $filename = round(microtime(true) * 1000) . '-' .
+                str_replace(' ', '-', $file->getClientOriginalName());
+
+                $file->move(public_path('uploads/multiple'), $filename);
+
+                Multipleupload::create([
+                    'ref_table' => 'pelanggan',
+                    'ref_id'    => $pelanggan->pelanggan_id, // pk pelanggan kamu
+                    'filename'  => $filename,
+                ]);
+            }
+        }
 
         return redirect()->route('pelanggan.index')
-            ->with('success', 'Penambahan Data Berhasil!');
+            ->with('create', 'Penambahan data berhasil!');
     }
 
-    # =========================================
-    #                SHOW (DETAIL)
-    # =========================================
-    public function show($id)
+    public function show(string $id)
     {
         $pelanggan = Pelanggan::findOrFail($id);
 
-        $files = MultipleUpload::where('ref_table', 'pelanggan')
+        $files = Multipleupload::where('ref_table', 'pelanggan')
             ->where('ref_id', $id)
             ->get();
 
         return view('admin.pelanggan.show', compact('pelanggan', 'files'));
     }
 
-    # =========================================
-    #                EDIT
-    # =========================================
-    public function edit($id)
+    public function edit(string $id)
     {
-        $data['dataPelanggan'] = Pelanggan::findOrFail($id);
-        return view('admin.pelanggan.edit', $data);
+        $dataPelanggan = Pelanggan::findOrFail($id);
+
+        $files = Multipleupload::where('ref_table', 'pelanggan')
+            ->where('ref_id', $id)
+            ->get();
+
+        return view('admin.pelanggan.edit', compact('dataPelanggan', 'files'));
+
+        // $data['dataPelanggan'] = Pelanggan::findOrFail($id);
+        // return view('admin.pelanggan.edit', $data);
     }
 
-    # =========================================
-    #                UPDATE
-    # =========================================
-    public function update(Request $request, $id)
+    public function update(Request $request, string $id)
     {
-        $pelanggan = Pelanggan::findOrFail($id);
-
-        $pelanggan->update($request->only([
-            'first_name', 'last_name', 'birthday',
-            'gender', 'email', 'phone',
-        ]));
-
-        return redirect()->route('pelanggan.index')
-            ->with('success', 'Perubahan Data Berhasil!');
-    }
-
-    # =========================================
-    #                DELETE
-    # =========================================
-    public function destroy($id)
-    {
-        Pelanggan::findOrFail($id)->delete();
-
-        return redirect()->route('pelanggan.index')
-            ->with('success', 'Data berhasil dihapus');
-    }
-
-    # =========================================
-    #        HANDLE MULTIPLE UPLOAD FILES
-    # =========================================
-    public function handleFiles(Request $request, $id)
-    {
-
         $request->validate([
-            'files'   => 'required',
-            'files.*' => 'file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'first_name' => 'required',
+            'last_name'  => 'required',
+            'birthday'   => 'required',
+            'gender'     => 'required',
+            'email'      => 'required',
+            'phone'      => 'required',
+            'files.*'    => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
         ]);
 
-        foreach ($request->file('files') as $file) {
+        $pelanggan = Pelanggan::findOrFail($id);
 
-            // Simpan ke folder storage/app/public/multipleuploads/
-            $path = $file->store('multipleuploads', 'public');
+        // 1. Update data pelanggan
+        $pelanggan->update($request->only([
+            'first_name', 'last_name', 'birthday', 'gender', 'email', 'phone',
+        ]));
 
-            MultipleUpload::create([
-                'filename'  => $path,
-                'ref_table' => 'pelanggan',
-                'ref_id'    => $id,
-            ]);
+        // 2. Tambah file baru (kalau ada) saat edit
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                if (! $file->isValid()) {
+                    continue;
+                }
+
+                $filename = round(microtime(true) * 1000) . '-' .
+                str_replace(' ', '-', $file->getClientOriginalName());
+
+                $file->move(public_path('uploads/multiple'), $filename);
+
+                Multipleupload::create([
+                    'ref_table' => 'pelanggan',
+                    'ref_id'    => $pelanggan->pelanggan_id,
+                    'filename'  => $filename,
+                ]);
+            }
         }
 
-        return back()->with('success', 'File berhasil diupload!');
+        return redirect()->route('pelanggan.index')
+            ->with('update', 'Perubahan data berhasil!');
     }
 
-    # =========================================
-    #             DELETE ONE FILE
-    # =========================================
-    public function deleteFile($fileId)
+    public function destroy(string $id)
     {
-        $file = MultipleUpload::findOrFail($fileId);
+        $pelanggan = Pelanggan::findOrFail($id);
+        $pelanggan->delete();
 
-        if (Storage::disk('public')->exists($file->filename)) {
-            Storage::disk('public')->delete($file->filename);
+        return redirect()->route('pelanggan.index')
+            ->with('delete', 'Data berhasil dihapus!');
+    }
+
+    /* MULTIPLE FILE UPLOAD */
+    public function uploadFiles(Request $request)
+    {
+        $request->validate([
+            'ref_table' => 'required|string',
+            'ref_id'    => 'required|integer',
+            'files.*'   => 'required|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+        ]);
+
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                if (! $file->isValid()) {
+                    continue;
+                }
+
+                $filename = round(microtime(true) * 1000) . '-' .
+                str_replace(' ', '-', $file->getClientOriginalName());
+
+                $file->move(public_path('uploads/multiple'), $filename);
+
+                Multipleupload::create([
+                    'ref_table' => $request->ref_table,
+                    'ref_id'    => $request->ref_id,
+                    'filename'  => $filename,
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Data berhasil ditambahkan!');
+    }
+
+    /* DELETE FILE */
+    public function deleteFile(string $fileId)
+    {
+        $file = Multipleupload::findOrFail($fileId);
+
+        $path = public_path('uploads/multiple/' . $file->filename);
+        if (file_exists($path)) {
+            @unlink($path);
         }
 
         $file->delete();
 
-        return back()->with('success', 'File berhasil dihapus!');
+        return redirect()->back()->with('success', 'Data berhasil di hapus!');
     }
 }

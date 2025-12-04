@@ -8,11 +8,11 @@ use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
-    // 🔹 Tampilkan semua data user
+    // 🔹 Tampilkan semua data user (PAKAI PAGINATION)
     public function index()
     {
-        $data['dataUser'] = User::paginate(10);
-        return view('admin.user.index', $data);
+        $dataUser = User::latest()->paginate(10); // <— penting buat syarat pagination
+        return view('admin.user.index', compact('dataUser'));
     }
 
     // 🔹 Form tambah user baru
@@ -27,19 +27,19 @@ class UserController extends Controller
         $request->validate([
             'name'            => 'required|string|max:255',
             'email'           => 'required|email|unique:users,email',
-            'password'        => 'required|min:6|confirmed',
+            'password'        => 'required|min:6',
+            'role'            => 'required',
             'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $data             = $request->all();
+        // ambil hanya field yang diperlukan
+        $data             = $request->only(['name', 'email', 'role']);
         $data['password'] = Hash::make($request->password);
 
-        // 🔸 Upload foto profil jika ada
+        // upload foto jika ada
         if ($request->hasFile('profile_picture')) {
-            $file     = $request->file('profile_picture');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->storeAs('profile_pictures', $filename, 'public');
-            $data['profile_picture'] = 'profile_pictures/' . $filename;
+            $data['profile_picture'] =
+            $request->file('profile_picture')->store('profile_pictures', 'public');
         }
 
         User::create($data);
@@ -62,32 +62,30 @@ class UserController extends Controller
         $request->validate([
             'name'            => 'required|string|max:255',
             'email'           => 'required|email|unique:users,email,' . $id,
-            'password'        => 'nullable|min:6|confirmed',
+            'password'        => 'nullable|min:6',
+            'role'            => 'required',
             'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $data = $request->all();
+        // ambil field dasar (tanpa password & foto dulu)
+        $data = $request->only(['name', 'email', 'role']);
 
-        // 🔸 Update password jika diisi
+        // hanya update password jika diisi
         if (! empty($request->password)) {
             $data['password'] = Hash::make($request->password);
-        } else {
-            unset($data['password']);
         }
 
-        // 🔸 Jika upload foto baru
+        // kalau upload foto baru
         if ($request->hasFile('profile_picture')) {
 
-            // hapus file lama jika ada
-            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+            // hapus foto lama (kalau ada)
+            if ($user->profile_picture) {
                 Storage::disk('public')->delete($user->profile_picture);
             }
 
-            // upload file baru
-            $file     = $request->file('profile_picture');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->storeAs('profile_pictures', $filename, 'public');
-            $data['profile_picture'] = 'profile_pictures/' . $filename;
+            // simpan foto baru
+            $data['profile_picture'] =
+            $request->file('profile_picture')->store('profile_pictures', 'public');
         }
 
         $user->update($data);
@@ -100,8 +98,7 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
-        // 🔸 Hapus foto profil dari storage
-        if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+        if ($user->profile_picture) {
             Storage::disk('public')->delete($user->profile_picture);
         }
 
